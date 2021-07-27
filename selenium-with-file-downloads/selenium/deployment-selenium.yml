@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-deployment
+  labels:
+    component: selenium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: selenium
+  template:
+    metadata:
+      name: selenium-template
+      labels:
+        component: selenium
+    spec:
+      containers:
+        - name: selenium-standalone-chrome
+          image: selenium/standalone-chrome-debug:3.141.59-20210607
+          env:
+            - name: VNC_NO_PASSWORD
+              value: "1"
+          ports:
+            - name: grid-port
+              containerPort: 4444
+            - name: vnc-port
+              containerPort: 5900
