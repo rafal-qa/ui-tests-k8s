@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: tests-pod
+  name: tests-runner-pod
   labels:
     component: tests
 spec:
@@ -17,3 +17,5 @@ spec:
           value: "selenium-grid-service"
         - name: SELENIUM_PORT
           value: "4444"
+        - name: DOWNLOADS_API_URL
+          value: "http://selenium-downloads-service:80"

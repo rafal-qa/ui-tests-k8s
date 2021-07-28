@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: selenium-vnc-service
+  name: selenium-vnc-node-service
 spec:
   type: NodePort
   ports:

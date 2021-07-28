@@ -1,5 +1,15 @@
 # Single Selenium node with file downloads
 
+This testing infrastructure consists of 3 Pods:
+
+1. Application - simple Flask server
+2. Selenium - Pod with 2 containers
+   * [Selenium Grid Server](https://github.com/SeleniumHQ/docker-selenium)
+   * Service for accessing downloaded files by HTTP. It's Nginx server which shares downloads directory with Selenium Server and displays files list in JSON format.
+3. E2E tests project (tests runner) - simple Pytest tests using Selenium remote browser
+
+---
+
 Run below commands from `selenium-with-file-downloads` directory.
 
 
@@ -8,11 +18,6 @@ Run below commands from `selenium-with-file-downloads` directory.
 Build Docker image
 ```bash
 docker build -t ui-tests/app-with-file app
-```
-
-(Optional) Check if app works before using in K8s
-```bash
-docker run -p 3000:3000 ui-tests/app-with-file
 ```
 
 Push image to minikube
@@ -33,36 +38,34 @@ kubectl logs --tail=-1 -l component=app
 ```
 
 
-## Selenium (Chrome browser)
+## Selenium Server
+
+Prepare file downloads API service
+```bash
+docker build -t ui-tests/downloads-api selenium/downloads
+minikube image load ui-tests/downloads-api
+```
 
 Deploy to K8s
 ```bash
 kubectl apply \
     -f selenium/service-selenium-grid.yml \
-    -f selenium/service-selenium-vnc.yml \
+    -f selenium/service-selenium-downloads.yml \
     -f selenium/deployment-selenium.yml
 ```
 
 Display logs
 ```bash
-kubectl logs --tail=-1 -l component=selenium
+kubectl logs --tail=-1 -l component=selenium -c selenium-standalone-chrome
+kubectl logs --tail=-1 -l component=selenium -c selenium-downloads-api
 ```
 
-(Optional) Connect to Selenium container using VNC viewer to check if works
-1. Run `minikube service --url selenium-vnc-service` to get IP and port (remove `http://`)
-2. Connect using VNC
-3. Open browser and go to app URL `http://app-service:3000`
 
+## Tests runner
 
-## Test runner
-
-Build Docker image
+Build and push image
 ```bash
 docker build -t ui-tests/tests-runner tests
-```
-
-Push image to minikube
-```bash
 minikube image load ui-tests/tests-runner
 ```
 
@@ -76,7 +79,53 @@ Display logs
 kubectl logs --tail=-1 -l component=tests
 ```
 
-## TODO
+## Development / debugging
 
-* Selenium Grid healthcheck
-* File downloads service
+### See the browser and interact with it
+
+1. Allow access to VNC server
+```bash
+kubectl apply -f selenium/dev/service-selenium-vnc-node.yml
+```
+
+2. Get VNC address
+```bash
+minikube service --url selenium-vnc-node-service | sed 's#http://##'
+```
+
+3. Connect using VNC, open browser and go to app URL `http://app-service:3000`
+
+### Execute tests locally using K8s infrastructure
+
+1. Allow access to Selenium Grid and downloads API
+```bash
+kubectl apply \
+    -f selenium/dev/service-selenium-grid-node.yml \
+    -f selenium/dev/service-selenium-downloads-node.yml
+```
+
+2. Get Selenium and downloads API hosts/IPs
+```bash
+minikube service --url selenium-grid-node-service
+minikube service --url selenium-downloads-node-service
+```
+
+3. Run tests without container \
+(replace `192.168.49.2` with IP from `minikube service` command) \
+(run in `tests` directory)
+```bash
+DOWNLOADS_API_URL=http://192.168.49.2:30080 pytest -v \
+    --base-url=http://app-service:3000 \
+    --driver=Remote \
+    --selenium-host=192.168.49.2 \
+    --selenium-port=30044 \
+    --capability browserName chrome
+```
+
+Remove downloaded file from Selenium Pod before rerunning test (assuming that only 1 `selenium` Pod is listed)
+```bash
+kubectl exec \
+    $(kubectl get pods -l component=selenium --no-headers -o custom-columns=":metadata.name") \
+    -c selenium-downloads-api \
+    -- rm /usr/share/nginx/html/file.bin
+```

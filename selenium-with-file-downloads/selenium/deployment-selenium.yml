@@ -15,9 +15,15 @@ spec:
       labels:
         component: selenium
     spec:
+      volumes:
+        - name: downloads-directory
+          emptyDir: { }
       containers:
         - name: selenium-standalone-chrome
           image: selenium/standalone-chrome-debug:3.141.59-20210607
+          volumeMounts:
+            - name: downloads-directory
+              mountPath: /home/seluser/Downloads
           env:
             - name: VNC_NO_PASSWORD
               value: "1"
@@ -26,3 +32,24 @@ spec:
               containerPort: 4444
             - name: vnc-port
               containerPort: 5900
+          startupProbe:
+            httpGet:
+              path: /wd/hub/status
+              port: grid-port
+            failureThreshold: 10
+            periodSeconds: 2
+        - name: selenium-downloads-api
+          image: ui-tests/downloads-api
+          imagePullPolicy: Never
+          volumeMounts:
+            - name: downloads-directory
+              mountPath: /usr/share/nginx/html
+          ports:
+            - name: http-port
+              containerPort: 80
+          startupProbe:
+            httpGet:
+              path: /
+              port: http-port
+            failureThreshold: 10
+            periodSeconds: 2

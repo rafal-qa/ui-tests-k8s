@@ -2,8 +2,9 @@ FROM python:3.8-slim-buster
 
 WORKDIR /app
 
-RUN pip3 install pytest pytest-selenium
+RUN pip3 install pytest pytest-selenium requests
 
+COPY pytest.ini pytest.ini
 COPY page_test.py page_test.py
 
 CMD pytest -v \
