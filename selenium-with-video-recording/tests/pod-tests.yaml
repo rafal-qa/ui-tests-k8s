@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tests-runner-pod
+  labels:
+    component: tests
+spec:
+  restartPolicy: Never
+  containers:
+    - name: tests-video-runner
+      image: ui-tests/tests-video-runner
+      imagePullPolicy: Never
+      env:
+        - name: BASE_URL
+          value: "http://app-clock-service:3000"
+        - name: SELENIUM_HOST
+          value: "selenium-grid-service"
+        - name: SELENIUM_PORT
+          value: "4444"

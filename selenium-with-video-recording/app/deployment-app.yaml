@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-clock-deployment
+  labels:
+    component: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: app
+  template:
+    metadata:
+      name: app-template
+      labels:
+        component: app
+    spec:
+      containers:
+        - name: app-clock
+          image: ui-tests/app-clock
+          imagePullPolicy: Never
+          ports:
+            - name: http-port
+              containerPort: 3000
+          startupProbe:
+            httpGet:
+              path: /
+              port: http-port
+            failureThreshold: 10
+            periodSeconds: 2

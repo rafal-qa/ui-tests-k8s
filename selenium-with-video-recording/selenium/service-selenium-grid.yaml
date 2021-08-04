@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-grid-service
+spec:
+  type: ClusterIP
+  ports:
+    - targetPort: 4444
+      port: 4444
+  selector:
+    component: selenium

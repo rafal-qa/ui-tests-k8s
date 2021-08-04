@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-video-deployment
+  labels:
+    component: selenium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: selenium
+  template:
+    metadata:
+      name: selenium-template
+      labels:
+        component: selenium
+    spec:
+      volumes:
+        - name: videos
+          persistentVolumeClaim:
+            claimName: local-pv-claim
+      containers:
+        - name: selenium-4-standalone-chrome
+          image: selenium/standalone-chrome:4.0.0-rc-1-prerelease-20210713
+          env:
+            - name: VNC_NO_PASSWORD
+              value: "1"
+          ports:
+            - name: grid-port
+              containerPort: 4444
+          startupProbe:
+            httpGet:
+              path: /wd/hub/status
+              port: grid-port
+            failureThreshold: 10
+            periodSeconds: 2
+        - name: selenium-video
+          image: selenium/video:ffmpeg-4.3.1-20210713
+          volumeMounts:
+            - mountPath: "/videos"
+              name: videos
+          env:
+            - name: DISPLAY_CONTAINER_NAME
+              value: "localhost"
+          ports:
+            - name: status-port
+              containerPort: 9000
+          startupProbe:
+            httpGet:
+              path: /
+              port: status-port
+            failureThreshold: 10
+            periodSeconds: 2
