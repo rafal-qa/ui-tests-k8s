@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-clock-deployment
+  name: app-deployment
   labels:
     component: app
 spec:
@@ -16,15 +16,20 @@ spec:
         component: app
     spec:
       containers:
-        - name: app-clock
-          image: ui-tests/app-clock
+        - name: app
+          image: ui-tests/app
           imagePullPolicy: Never
           ports:
             - name: http-port
               containerPort: 3000
           startupProbe:
             httpGet:
-              path: /
+              path: /startup
               port: http-port
             failureThreshold: 10
             periodSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: http-port
+            periodSeconds: 10

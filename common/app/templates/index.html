@@ -1,0 +1,12 @@
+<h1>Application</h1>
+<h2 id="clock"></h2>
+<p><a href="file.bin">Download</a></p>
+
+<script>
+function showTime() {
+    var time = new Date().toISOString();
+    document.getElementById("clock").innerHTML = time;
+};
+
+setInterval(showTime, 51);
+</script>
