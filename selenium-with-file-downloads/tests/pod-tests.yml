@@ -7,8 +7,8 @@ metadata:
 spec:
   restartPolicy: Never
   containers:
-    - name: tests-runner
-      image: ui-tests/tests-runner
+    - name: tests-download-runner
+      image: ui-tests/tests-download-runner
       imagePullPolicy: Never
       env:
         - name: BASE_URL

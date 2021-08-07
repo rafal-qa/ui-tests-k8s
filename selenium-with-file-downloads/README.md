@@ -2,7 +2,7 @@
 
 This testing infrastructure consists of 3 Pods:
 
-1. Application - simple Flask server
+1. [Application](../common/app)
 2. Selenium - Pod with 2 containers
    * [Selenium Grid Server](https://github.com/SeleniumHQ/docker-selenium)
    * Service for accessing downloaded files by HTTP. It's Nginx server which shares downloads directory with Selenium Server and displays files list in JSON format.
@@ -13,32 +13,9 @@ This testing infrastructure consists of 3 Pods:
 Run below commands from `selenium-with-file-downloads` directory.
 
 
-## Application
-
-Build Docker image
-```bash
-docker build -t ui-tests/app-with-file app
-```
-
-Push image to minikube
-```bash
-minikube image load ui-tests/app-with-file
-```
-
-Deploy to K8s
-```bash
-kubectl apply \
-    -f app/service-app.yml \
-    -f app/deployment-app.yml
-```
-
-Display logs
-```bash
-kubectl logs --tail=-1 -l component=app
-```
-
-
 ## Selenium Server
+
+It uses version 3 image (stable).
 
 Prepare file downloads API service
 ```bash
@@ -56,7 +33,7 @@ kubectl apply \
 
 Display logs
 ```bash
-kubectl logs --tail=-1 -l component=selenium -c selenium-standalone-chrome
+kubectl logs --tail=-1 -l component=selenium -c selenium-3-standalone-chrome
 kubectl logs --tail=-1 -l component=selenium -c selenium-downloads-api
 ```
 
@@ -65,8 +42,8 @@ kubectl logs --tail=-1 -l component=selenium -c selenium-downloads-api
 
 Build and push image
 ```bash
-docker build -t ui-tests/tests-runner tests
-minikube image load ui-tests/tests-runner
+docker build -t ui-tests/tests-download-runner tests
+minikube image load ui-tests/tests-download-runner
 ```
 
 Deploy to K8s, run tests and exit
@@ -77,6 +54,14 @@ kubectl apply -f tests/pod-tests.yml
 Display logs
 ```bash
 kubectl logs --tail=-1 -l component=tests
+```
+
+Alternative one-in-all command: Start tests, switch to log and cleanup
+```bash
+kubectl apply -f tests/pod-tests.yml \
+    && kubectl wait --timeout=30s --for=condition=Ready pod -l component=tests \
+    && kubectl logs --tail=-1 -f -l component=tests \
+    && kubectl delete -f tests/pod-tests.yml
 ```
 
 ## Development / debugging
