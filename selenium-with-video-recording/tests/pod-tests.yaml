@@ -12,8 +12,21 @@ spec:
       imagePullPolicy: Never
       env:
         - name: BASE_URL
-          value: "http://app-clock-service:3000"
+          value: "http://app-service:3000"
         - name: SELENIUM_HOST
           value: "selenium-grid-service"
         - name: SELENIUM_PORT
           value: "4444"
+  initContainers:
+    - name: init-selenium-server
+      image: busybox:1.33
+      command: ['sh', '-c',
+                "until wget -O /dev/null -T 2 http://selenium-grid-service:4444/wd/hub/status;
+                do echo [$(date -R)] Waiting for Selenium; sleep 2;
+                done"]
+    - name: init-selenium-video
+      image: busybox:1.33
+      command: ['sh', '-c',
+                "until wget -O /dev/null -T 2 http://selenium-video-status-service:9000;
+                do echo [$(date -R)] Waiting for video; sleep 2;
+                done"]

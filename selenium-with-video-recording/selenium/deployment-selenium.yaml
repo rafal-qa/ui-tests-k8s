@@ -49,5 +49,12 @@ spec:
             httpGet:
               path: /
               port: status-port
-            failureThreshold: 10
-            periodSeconds: 2
+            failureThreshold: 25
+            periodSeconds: 1
+      initContainers:
+        - name: init-app
+          image: busybox:1.33
+          command: ['sh', '-c',
+                    "until wget -O /dev/null -T 2 http://app-service:3000/startup;
+                    do echo [$(date -R)] Waiting for app; sleep 2;
+                    done"]
